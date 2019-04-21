@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import './App.css';
-import Home from './Home';
+import { BrowserRouter } from 'react-router-dom';
+import Routes from './Routes';
+import { renderRoutes } from 'react-router-config';
 
 class App extends Component {
   componentDidMount() {
@@ -10,7 +12,9 @@ class App extends Component {
   }
   render() {
     return (
-      <Home name="Alligator" />
+      <BrowserRouter>
+        <div>{renderRoutes(Routes)}</div>
+      </BrowserRouter>
     );
   }
 }

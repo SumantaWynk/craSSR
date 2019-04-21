@@ -1,11 +1,11 @@
 import path from 'path';
 import fs from 'fs';
-
-import React from 'react';
 import express from 'express';
-import ReactDOMServer from 'react-dom/server';
+import renderer from './helpers/renderer';
+import createStore from './helpers/createStore';
+import { matchRoutes } from 'react-router-config';
+import Routes from '../src/Routes';
 
-import App from '../src/App';
 
 const PORT = process.env.PORT || 8888;
 const app = express();
@@ -14,19 +14,29 @@ const router = express.Router()
 
 const serverRenderer = (req, res, next) => {
     fs.readFile(path.resolve('./build/index.html'), 'utf8', (err, data) => {
+
         if (err) {
             console.error(err)
             return res.status(500).send('An error occurred')
         }
-        return res.send(
-            data.replace(
-                '<div id="root"></div>',
-                `<div id="root">${ReactDOMServer.renderToString(<App />)}</div>`
+
+        const store = createStore();
+        const promises = matchRoutes(Routes, req.path).map(({ route }) => {
+            return route.loadData ? route.loadData(store) : null;
+        })
+
+        Promise.all(promises).then(() => {
+            return res.send(
+                renderer(data, req, store)
             )
-        )
+        })
     })
 }
-router.use('^/$', serverRenderer)
+
+
+router.get('/', serverRenderer)
+
+router.get('/users', serverRenderer)
 
 router.use(
     express.static('build')
